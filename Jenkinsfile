@@ -55,9 +55,9 @@ pipeline {
                 script {
                     // Fetch DockerHub credentials securely from Jenkins
                     def dockerHubCredentials = credentials(DOCKER_CREDENTIALS_ID)
-                    def username = dockerHubCredentials.username
-                    def password = dockerHubCredentials.password
-                    
+                    def username = dockerHubCredentials.getUsername()
+                    def password = dockerHubCredentials.getPassword()
+
                     // Login to DockerHub
                     bat """
                         echo ${password} | docker login -u ${username} --password-stdin
