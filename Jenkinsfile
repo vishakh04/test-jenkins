@@ -47,38 +47,39 @@ pipeline {
     stages {
         stage('Build Image') {
             steps {
-                bat "docker build -t %DOCKER_IMAGE%:%BUILD_NUMBER% ."
+                bat "docker build -t vishakhsingh7/nodejs-app:%BUILD_NUMBER% ."
             }
         }
         stage('Login to DockerHub') {
             steps {
                 script {
-                    // Retrieving DockerHub credentials
+                    // Fetch DockerHub credentials securely from Jenkins
                     def dockerHubCredentials = credentials(DOCKER_CREDENTIALS_ID)
                     def username = dockerHubCredentials.username
                     def password = dockerHubCredentials.password
-                    // Logging in to DockerHub
+                    
+                    // Login to DockerHub
                     bat """
-                        echo %password% | docker login -u %username% --password-stdin
+                        echo ${password} | docker login -u ${username} --password-stdin
                     """
                 }
             }
         }
         stage('Push Image') {
             steps {
-                bat """
-                    docker tag %DOCKER_IMAGE%:%BUILD_NUMBER% %DOCKER_IMAGE%:latest
-                    docker push %DOCKER_IMAGE%:%BUILD_NUMBER%
-                    docker push %DOCKER_IMAGE%:latest
-                """
+                bat '''
+                    docker tag vishakhsingh7/nodejs-app:%BUILD_NUMBER% vishakhsingh7/nodejs-app:latest
+                    docker push vishakhsingh7/nodejs-app:%BUILD_NUMBER%
+                    docker push vishakhsingh7/nodejs-app:latest
+                '''
             }
         }
         stage('Cleanup') {
             steps {
-                bat """
-                    docker rmi %DOCKER_IMAGE%:%BUILD_NUMBER% || exit 0
-                    docker rmi %DOCKER_IMAGE%:latest || exit 0
-                """
+                bat '''
+                    docker rmi vishakhsingh7/nodejs-app:%BUILD_NUMBER% || exit 0
+                    docker rmi vishakhsingh7/nodejs-app:latest || exit 0
+                '''
             }
         }
     }
