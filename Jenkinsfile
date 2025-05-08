@@ -42,8 +42,7 @@ pipeline {
     agent any
     environment {
         DOCKER_IMAGE = 'vishakhsingh7/nodejs-app'
-        DOCKER_USERNAME = 'your_dockerhub_username'
-        DOCKER_PASSWORD = 'your_dockerhub_password'
+        DOCKER_CREDENTIALS_ID = 'dockerhubcred'
     }
     stages {
         stage('Build Image') {
@@ -53,7 +52,16 @@ pipeline {
         }
         stage('Login to DockerHub') {
             steps {
-                bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
+                script {
+                    // Retrieving DockerHub credentials
+                    def dockerHubCredentials = credentials(DOCKER_CREDENTIALS_ID)
+                    def username = dockerHubCredentials.username
+                    def password = dockerHubCredentials.password
+                    // Logging in to DockerHub
+                    bat """
+                        echo %password% | docker login -u %username% --password-stdin
+                    """
+                }
             }
         }
         stage('Push Image') {
@@ -75,4 +83,3 @@ pipeline {
         }
     }
 }
-
