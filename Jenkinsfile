@@ -1,43 +1,38 @@
 pipeline {
-    agent any 
+    agent any
     environment {
         DOCKER_IMAGE = 'vishakhsingh7/nodejs-app'
         DOCKER_CREDENTIALS_ID = 'dockerhubcred'
     }
     stages {
-        stage('Build docker image') {
+        stage('Build Image') {
             steps {
-                script {
-                    def dockerImage = docker.build("${DOCKER_IMAGE}:${BUILD_NUMBER}")
-                    // Store for later use
-                    env.IMAGE_TAG = "${DOCKER_IMAGE}:${BUILD_NUMBER}"
+                sh 'docker build -t vishakhsingh7/nodejs-app:${BUILD_NUMBER} .'
+            }
+        }
+        stage('Login to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
                 }
             }
         }
-        stage('Push docker image') {
+        stage('Push Image') {
             steps {
-                script {
-                    def dockerImage = docker.image("${DOCKER_IMAGE}:${BUILD_NUMBER}")
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                        dockerImage.push()
-                        dockerImage.push('latest')
-                    }
-                }
+                sh '''
+                    docker tag vishakhsingh7/nodejs-app:${BUILD_NUMBER} vishakhsingh7/nodejs-app:latest
+                    docker push vishakhsingh7/nodejs-app:${BUILD_NUMBER}
+                    docker push vishakhsingh7/nodejs-app:latest
+                '''
             }
         }
-        stage('Cleanup local images') {
+        stage('Cleanup') {
             steps {
-                sh "docker rmi ${DOCKER_IMAGE}:${BUILD_NUMBER} || true"
-                sh "docker rmi ${DOCKER_IMAGE}:latest || true"
+                sh '''
+                    docker rmi vishakhsingh7/nodejs-app:${BUILD_NUMBER} || true
+                    docker rmi vishakhsingh7/nodejs-app:latest || true
+                '''
             }
-        }
-    }
-    post {
-        success {
-            echo 'Build and push to Docker Hub completed successfully'
-        }
-        failure {
-            echo 'Build and push to Docker Hub failed'
         }
     }
 }
